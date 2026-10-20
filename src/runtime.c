@@ -1,7 +1,7 @@
 /* Narrow, explicit PS4 libc contracts. No automatic success stubs. */
 #define _CRT_RAND_S
 #include "runtime.h"
-#include "gpu/gow3gpu.h"
+#include "gpu/spartanportgpu.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -67,6 +67,7 @@ void runtime_start(uint64_t flags) {
 #endif
     stack_canary &= ~UINT64_C(255);
 }
+static void (*report_hook)(void); /* loader extras (ISA site counts) */
 void runtime_report(void) {
     printf("Runtime: _init_env=%zu, atexit=%zu, __cxa_atexit=%zu, registered handlers=%zu\n",
            calls_init, calls_atexit, calls_cxa, handler_count);
@@ -83,7 +84,9 @@ void runtime_report(void) {
     runtime_savedata_report();
     runtime_file_report();
     printf("Runtime: memory operations=%zu\n", (size_t)memory_calls);
+    if (report_hook) report_hook();
 }
+void runtime_set_report_hook(void (*hook)(void)) { report_hook = hook; }
 static ABI void init_env(void) {
     /* prepare.py verified the supplied libc export consists of exactly C3. */
     ++calls_init;
@@ -250,7 +253,7 @@ uintptr_t runtime_resolve(const char *name, int is_data) {
     if (save) return save;
     uintptr_t file = runtime_file_resolve(name);
     if (file) return file;
-    return gow3gpu_resolve(name);
+    return spartanportgpu_resolve(name);
 }
 static const struct { const char *nid, *symbol; } import_names[]={
 #include "import_names.inc"

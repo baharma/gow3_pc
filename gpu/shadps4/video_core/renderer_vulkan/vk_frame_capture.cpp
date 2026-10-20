@@ -30,6 +30,7 @@ struct Entry {
     u64 indices{};
     std::vector<u64> shaders; ///< vs/ps pairs (graphics) or cs (compute), first few
     std::vector<std::pair<Target, bool>> sampled; ///< textures (false) and storage images (true)
+    std::string state; ///< census line of the first pipeline (vk_pass_census.h)
     std::string note;
     std::vector<std::string> buffers; ///< dumped constants, per draw
 };
@@ -52,7 +53,7 @@ void AddBuffers(Entry& entry) {
 bool pass_open = false;
 std::mutex display_mutex;
 std::vector<VAddr> display_buffers;
-// gow3: read on every draw; the game registers a handful of display buffers once.
+// spartanport: read on every draw; the game registers a handful of display buffers once.
 std::array<std::atomic<VAddr>, 16> display_list{};
 std::atomic<u32> display_count{0};
 
@@ -92,12 +93,12 @@ void SetResult(std::string text) {
     result = std::move(text);
 }
 
-// GOW3_CAPTURE_DIR, else <user>/captures (GOW3_GPU_USER_DIR, the saves folder).
+// SPARTAN_CAPTURE_DIR, else <user>/captures (SPARTAN_GPU_USER_DIR, the saves folder).
 std::filesystem::path CaptureDir() {
-    if (const char* dir = std::getenv("GOW3_CAPTURE_DIR"); dir && dir[0]) {
+    if (const char* dir = std::getenv("SPARTAN_CAPTURE_DIR"); dir && dir[0]) {
         return dir;
     }
-    const char* user = std::getenv("GOW3_GPU_USER_DIR");
+    const char* user = std::getenv("SPARTAN_GPU_USER_DIR");
     return std::filesystem::path(user && user[0] ? user : "user") / "captures";
 }
 
@@ -135,6 +136,9 @@ void Write(VAddr presented) {
         if (!e.compute) {
             std::fprintf(f, "  depth  %s\n", Describe(e.depth).c_str());
         }
+        if (!e.state.empty()) {
+            std::fprintf(f, "  %s\n", e.state.c_str());
+        }
         for (const auto& [t, storage] : e.sampled) {
             std::fprintf(f, "  %s %s\n", storage ? "writes " : "samples", Describe(t).c_str());
         }
@@ -155,7 +159,7 @@ void Write(VAddr presented) {
 void FrameCapture::OnFlip(VAddr presented_address) {
     last_presented.store(presented_address, std::memory_order_relaxed);
     flips.fetch_add(1, std::memory_order_release);
-    static const char* trigger = std::getenv("GOW3_CAPTURE_TRIGGER");
+    static const char* trigger = std::getenv("SPARTAN_CAPTURE_TRIGGER");
     if (state.load(std::memory_order_relaxed) != Idle) {
         return;
     }
@@ -210,7 +214,7 @@ void FrameCapture::AddDisplayBuffer(VAddr address) {
 }
 
 void FrameCapture::BeginPass(const VideoCore::ImageInfo* const* colors, u32 num_colors,
-                             const VideoCore::ImageInfo* depth) {
+                             const VideoCore::ImageInfo* depth, std::string census) {
     std::vector<Target> targets;
     bool display = false;
     {
@@ -222,7 +226,7 @@ void FrameCapture::BeginPass(const VideoCore::ImageInfo* const* colors, u32 num_
         }
     }
     // Frame boundaries in the command stream: the pass that writes a display buffer as its only
-    // target. gow3: God of War III also draws scene passes (two targets) into display buffers.
+    // target. spartanport: SpartanPort also draws scene passes (two targets) into display buffers.
     display = display && targets.size() == 1;
     const bool new_pass = !(pass_open && !entries.empty() && !entries.back().compute &&
                             entries.back().colors == targets);
@@ -251,7 +255,8 @@ void FrameCapture::BeginPass(const VideoCore::ImageInfo* const* colors, u32 num_
         entries.back().colors == targets && entries.back().depth == d) {
         return;
     }
-    entries.push_back({.compute = false, .colors = std::move(targets), .depth = d});
+    entries.push_back(
+        {.compute = false, .colors = std::move(targets), .depth = d, .state = std::move(census)});
     pass_open = true;
 }
 
@@ -288,6 +293,9 @@ void FrameCapture::Dispatch(u64 cs_hash, u32 x, u32 y, u32 z) {
 }
 
 void FrameCapture::Buffer(u64 stage_hash, u32 slot, VAddr address, const void* data, u64 size) {
+    if (!data) {
+        return;
+    }
     const u64 bytes = std::min<u64>(size, 1024) & ~u64(3);
     std::string out = std::format("  buffer stage {:016x} slot {} at {:#x} size {}:", stage_hash,
                                   slot, address, size);

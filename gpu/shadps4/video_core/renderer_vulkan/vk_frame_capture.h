@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// gow3: frame analyzer. Creating the file named by GOW3_CAPTURE_TRIGGER records the next full
+// spartanport: frame analyzer. Creating the file named by SPARTAN_CAPTURE_TRIGGER records the next full
 // frame: every render pass (targets, depth, draw count, shaders, sampled textures) and compute
 // dispatch, in order, plus the buffer that was presented. Input for placing a temporal
 // upscaler (scene color, depth, motion vectors, UI) in the game's frame.
@@ -33,11 +33,17 @@ public:
     static bool Active() {
         return state.load(std::memory_order_relaxed) != Idle;
     }
+    /// GPU thread: whether a frame is being recorded right now.
+    static bool IsRecording() {
+        return state.load(std::memory_order_relaxed) == Recording;
+    }
     /// GPU thread, at every draw/dispatch: starts or ends a recording at frame boundaries.
     static void Poll();
 
+    /// `state`: the pass's census line (vk_pass_census.h), kept with the first pipeline that
+    /// opened the pass.
     static void BeginPass(const VideoCore::ImageInfo* const* colors, u32 num_colors,
-                          const VideoCore::ImageInfo* depth);
+                          const VideoCore::ImageInfo* depth, std::string census);
     static void Draw(u64 vs_hash, u64 ps_hash, u32 num_indices, u32 num_instances);
     static void Dispatch(u64 cs_hash, u32 x, u32 y, u32 z);
     static void Sampled(const VideoCore::ImageInfo& info, bool storage);

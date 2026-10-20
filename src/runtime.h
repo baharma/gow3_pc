@@ -1,13 +1,13 @@
-#ifndef GOW3_RUNTIME_H
-#define GOW3_RUNTIME_H
+#ifndef SPARTAN_RUNTIME_H
+#define SPARTAN_RUNTIME_H
 #include <stdint.h>
 #include <stddef.h>
 #ifdef _WIN32
 #include "compat_win.h"
-/* No signals on Windows: the exception handler resumes the thread in gow3_longjmp
- * (gpu/shim/gow3_toggles.h uses the same buffer type). */
-typedef gow3_jmp_buf sigjmp_buf;
-#define sigsetjmp(buffer, save) gow3_setjmp(buffer)
+/* No signals on Windows: the exception handler resumes the thread in spartanport_longjmp
+ * (gpu/shim/spartanport_toggles.h uses the same buffer type). */
+typedef spartanport_jmp_buf sigjmp_buf;
+#define sigsetjmp(buffer, save) spartanport_setjmp(buffer)
 #else
 #include <setjmp.h>
 #endif
@@ -20,6 +20,8 @@ typedef void (ABI *GuestCallback)(void);
 void runtime_start(uint64_t capabilities);
 uintptr_t runtime_resolve(const char *name, int is_data);
 void runtime_report(void);
+/* Called at the end of runtime_report (the loader adds its own counters). */
+void runtime_set_report_hook(void (*hook)(void));
 void runtime_finalize(void *dso);
 uintptr_t runtime_mutex_resolve(const char *name);
 void runtime_mutex_report(void);
@@ -35,6 +37,8 @@ void runtime_set_procparam(void *param);
 void **runtime_application_heap_api(void);
 uintptr_t runtime_thread_resolve(const char *name);
 void runtime_thread_report(void);
+/* Counts a guest sched_yield (zero_sleep 0) or a zero-length sleep (1) for the report (#209). */
+void runtime_thread_count_yield(int zero_sleep);
 void runtime_set_main_tls(const void *data, uint64_t filesz, uint64_t memsz, uint64_t align);
 void runtime_thread_attach_main(void);
 int32_t *runtime_errno(void);
@@ -90,6 +94,8 @@ uintptr_t runtime_audio_resolve(const char *name);
 void runtime_audio_report(void);
 uintptr_t runtime_pad_resolve(const char *name);
 void runtime_pad_report(void);
+/* probe --gamepad: prints one "Gamepad:" line for the first pad found (returns 1) or none (0). */
+int runtime_pad_describe(void);
 uintptr_t runtime_rtc_resolve(const char *name);
 const char *runtime_file_user_dir(void);
 void runtime_savedata_configure(const char *title);

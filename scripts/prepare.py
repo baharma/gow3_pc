@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inspect an already plaintext PS4 SELF; prepare a native entry-point probe.
+"""Inspect a plaintext PS4 SELF or unpacked ELF; prepare a native entry-point probe.
 
 No decryption, patches to source files, third-party modules or Python dependencies.
 Format references are linked in README.md. All offsets are checked before use.
@@ -25,10 +25,17 @@ def unpack(fmt, data, offset):
 
 
 def parse_self(data):
-    if span(data, 0, 4) != b'O\x15=\x1d':
-        raise ValueError("expected PS4 SELF")
-    count, = unpack('<H', data, 24)
-    base = 32 + count * 32
+    if not data:  # read_self names the file; this covers every other way in
+        raise ValueError('empty SELF (0 bytes)')
+    magic = span(data, 0, 4)
+    plain_elf = magic == b'\x7fELF'
+    if plain_elf:
+        count, base = 0, 0
+    elif magic == b'O\x15=\x1d':
+        count, = unpack('<H', data, 24)
+        base = 32 + count * 32
+    else:
+        raise ValueError("expected PS4 SELF or ELF")
     header = unpack('<16sHHIQQQIHHHHHH', data, base)
     if header[0][:7] != b'\x7fELF\x02\x01\x01' or header[2] != 62:
         raise ValueError("expected little-endian x86-64 ELF")
@@ -37,11 +44,15 @@ def parse_self(data):
     ph = [dict(zip(('type', 'flags', 'offset', 'vaddr', 'paddr', 'filesz', 'memsz', 'align'),
                    unpack('<IIQQQQQQ', data, base + header[5] + i * 56)))
           for i in range(header[10])]
-    end = max(p['offset'] + p['filesz'] for p in ph)
+    header_end = header[5] + header[10] * 56
+    end = max(header_end, max(p['offset'] + p['filesz'] for p in ph))
     if end > 512 * 1024 * 1024:
         raise ValueError("probe image exceeds 512 MiB limit")
+    # A plaintext ELF already stores segments at their program-header file
+    # offsets. Validate that every referenced byte exists before using it.
+    if plain_elf:
+        return bytearray(span(data, 0, end)), header, ph, [], []
     elf = bytearray(end)
-    header_end = header[5] + header[10] * 56
     elf[:header_end] = span(data, base, header_end)
     covered = [(0, header_end)]
     segments = []
@@ -70,7 +81,18 @@ def parse_self(data):
     return elf, header, ph, segments, missing
 
 
+def read_self(path):
+    """The bytes of a SELF file, which must hold something: an empty eboot.bin or prx (a copy
+    that failed, a placeholder made by hand) is named here instead of failing deep in the parser."""
+    data = Path(path).read_bytes()
+    if not data:
+        raise ValueError(f'{Path(path).name} is empty (0 bytes): the game files are incomplete')
+    return data
+
+
 def sfo(data):
+    if not data:
+        raise ValueError('param.sfo is empty (0 bytes): the game files are incomplete')
     magic, version, keys, values, count = unpack('<4sIIII', data, 0)
     if magic != b'\0PSF':
         raise ValueError('bad SFO signature')
@@ -81,6 +103,28 @@ def sfo(data):
         v = span(data, values + off, size)
         result[k] = struct.unpack('<I', v)[0] if fmt == 0x404 else v.rstrip(b'\0').decode('utf8', 'replace')
     return result
+
+
+SFO_LIMIT = 1 << 20  # a param.sfo is a few KiB; whatever lies beyond this under that name is not one
+
+
+def load_sfo(path):
+    """The values of a param.sfo file: OSError when it cannot be read, ValueError when it is not
+    one. At most SFO_LIMIT bytes are read."""
+    with Path(path).open('rb') as stream:
+        data = stream.read(SFO_LIMIT)
+    try:
+        return sfo(data)
+    except (TypeError, IndexError, struct.error) as error:
+        raise ValueError(f'bad SFO: {error}') from error
+
+
+def read_sfo(path):
+    """The values of a param.sfo, or None when the file is missing, unreadable, empty or not one."""
+    try:
+        return load_sfo(path)
+    except (OSError, ValueError):
+        return None
 
 
 def write_report(path, report):
@@ -95,7 +139,7 @@ def nid(name):
 
 def inspect_libc(path):
     """Prove that this dump's _init_env is exactly RET; never assume it."""
-    source = path.read_bytes()
+    source = read_self(path)
     elf, header, ph, _, missing = parse_self(source)
     dynamic = next(p for p in ph if p['type'] == 2)
     tags = dict(unpack('<QQ', elf, pos) for pos in
@@ -126,7 +170,7 @@ def inspect_libc(path):
 
 
 def prepare(game, out):
-    source = (game / 'eboot.bin').read_bytes()
+    source = read_self(game / 'eboot.bin')
     elf, header, ph, segments, missing = parse_self(source)
     loads = [p for p in ph if p['type'] in (1, 0x61000010)]
     def mapped(addr, size=8):
