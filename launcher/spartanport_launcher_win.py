@@ -11,8 +11,10 @@ Frozen with PyInstaller (packaging/windows/package.sh) the same SpartanPort.exe 
 game without the window (`--play`), run.py (`--run`) and the preparation scripts (`--script`),
 so a packaged port needs no Python installation.
 """
+import base64
 import contextlib
 import glob
+import io
 import importlib.util
 import json
 import math
@@ -194,6 +196,80 @@ def list_gpus():
     return parse_gpu_list(done.stdout) if done.returncode == 0 else []
 
 
+def parse_display_list(text):
+    """One tuple per line of `spartanport-probe --displays`: index, name, primary, x, y, width, height. The
+    index is the position in SDL_GetDisplays() that SPARTAN_MONITOR names, so the game and the launcher
+    count the monitors the same way. A line is kept only with exactly seven well-formed columns, so a
+    monitor the tool could not describe leaves a gap in the indices instead of a wrong entry."""
+    def number(column):
+        return int(column) if re.fullmatch(r'-?[0-9]+', column) else None
+
+    rows = []
+    # Only the record separator the tool writes ends a row: LF, or CRLF when the C runtime of a
+    # Windows build translates it. str.splitlines() would also break on Unicode separators a monitor
+    # name can hold (U+2028 and friends), splitting a whole monitor into unreadable halves; here they
+    # stay inside the name column.
+    for raw in text.split('\n'):
+        line = raw[:-1] if raw.endswith('\r') else raw  # CRLF from a Windows C runtime
+        row = line.split('\t')
+        if len(row) != 7:
+            continue
+        index, name, primary, x, y, width, height = row
+        x, y, width, height = (number(column) for column in (x, y, width, height))
+        if not (index.isascii() and index.isdigit()) or primary not in ('0', '1') or None in (x, y, width, height):
+            continue
+        if width <= 0 or height <= 0:  # no usable geometry is no monitor to offer
+            continue
+        rows.append((index, name, primary, x, y, width, height))
+    return rows
+
+
+def display_label(row):
+    """What the Monitor list shows for one of parse_display_list's rows: the name and the resolution,
+    plus the position when the monitor is not at the origin (that tells two identical screens apart).
+    The primary monitor gets a (primary) suffix."""
+    _index, name, primary, x, y, width, height = row
+    parts = [name] if name else []
+    parts.append(f'{width} × {height}')
+    if (x, y) != (0, 0):
+        parts.append(f'({x}, {y})')
+    if primary == '1':
+        parts.append('(primary)')
+    return ' · '.join(parts)
+
+
+def monitor_options(displays):
+    """The Monitor list: the primary default first, then every monitor the probe described, keyed by
+    its SDL index. A gap the probe left (a monitor without geometry) stays a gap, never renumbered."""
+    return [('', ('Primary (default)',))] + [(row[0], (display_label(row),)) for row in displays]
+
+
+def monitor_selection(displays, saved):
+    """The value the Monitor list takes for `displays`: the index it is given while it is still one of
+    the options, the primary default otherwise. The index is followed, never the position it used to
+    sit at, so a shorter or reordered list (another window system) never lands on a different screen."""
+    values = [value for value, _text in monitor_options(displays)]
+    return saved if saved in values else values[0]
+
+
+def list_displays(backend='auto'):
+    """The monitors the game can open on, in the order `spartanport-probe --displays` numbers them, or [] when
+    the tool cannot tell. The probe runs under the same SDL video driver the game will use, so both
+    number the displays in the same order (an 'auto' driver lets SDL choose, exactly as the game does)."""
+    tool = find_tool('spartanport-probe' + ('.exe' if WINDOWS else ''))
+    if not tool:
+        return []
+    env = dict(os.environ)
+    if not WINDOWS and backend in ('wayland', 'x11'):
+        env['SDL_VIDEO_DRIVER'] = env['SDL_VIDEODRIVER'] = backend
+    try:
+        done = subprocess.run([tool, '--displays'], capture_output=True, text=True, encoding='utf-8',
+                              errors='replace', timeout=5, creationflags=NO_WINDOW, env=env)
+    except (OSError, subprocess.SubprocessError):
+        return []
+    return parse_display_list(done.stdout) if done.returncode == 0 else []
+
+
 # ---------------------------------------------------------------------------------------------
 # Languages: every text is written in English with the Russian next to it; the other
 # languages are in spartanport_lang.py, keyed by the English text.
@@ -201,6 +277,7 @@ def list_gpus():
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import button_icons  # noqa: E402
 import spartanport_lang  # noqa: E402
+import spartanport_trophies  # noqa: E402
 
 LANG = 'en'
 FONT_LOADED = False  # set by main() for the window; the command-line roles never need the font
@@ -233,9 +310,11 @@ def pick_fonts(families):
     # Registration can succeed in fontconfig even when Tk uses the X core font backend.
     FONT_LOADED = FONT_LOADED and bool({'Cinzel Black', 'Cinzel'} & available)
     pick = lambda names: next((name for name in names if name in available), names[-1])
-    UI_FONT = pick(('Segoe UI', 'Helvetica Neue', 'Noto Sans', 'DejaVu Sans', 'Helvetica'))
+    chinese = ('Microsoft YaHei UI', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Noto Sans SC',
+               'Source Han Sans SC', 'PingFang SC', 'WenQuanYi Micro Hei') if LANG == 'zh' else ()
+    UI_FONT = pick(chinese + ('Segoe UI', 'Helvetica Neue', 'Noto Sans', 'DejaVu Sans', 'Helvetica'))
     MONO_FONT = pick(('Consolas', 'Menlo', 'Noto Sans Mono', 'DejaVu Sans Mono', 'Courier'))
-    SERIF_FONT = pick(('Georgia', 'Noto Serif', 'DejaVu Serif', 'Times'))
+    SERIF_FONT = UI_FONT if LANG == 'zh' else pick(('Georgia', 'Noto Serif', 'DejaVu Serif', 'Times'))
 
 
 def positive_number(value):
@@ -397,7 +476,7 @@ INI_DEFAULTS = {'upscaler': 'fsr3', 'preset': '1',
                 'object_motion': '1', 'show_fps': '1', 'output_res': '1920x1080',
                 'live_resolution': 'auto', 'display_mode': 'windowed', 'vsync': '1', 'fps_limit': '0',
                 'async_shaders': '1', 'deferred_readback': '1', 'stale_readback': '1',
-                'render_resolution': 'native', 'engine_fps': '120',
+                'render_resolution': graphics_options.DEFAULTS['render_resolution'], 'engine_fps': '120',
                 'frames_queued': '1', 'cheat_very_hard': '0', 'cheat_double_jumps': '0',
                 'anisotropy': '0', 'vibration': '100', 'mouse_prompt_distance': '48', 'mouse_lock': '1',
                 'mouse_aim_style': '0', 'mouse_aim_sensitivity': '100'}
@@ -405,14 +484,15 @@ DISPLAY_MODES = [('windowed', ('Windowed',)), ('borderless', ('Borderless',)), (
 ANISOTROPY = [('0', ('Game default',)), ('2', ('2x',)), ('4', ('4x',)), ('8', ('8x',)), ('16', ('16x',))]
 FPS_LIMITS = [('30', ('30',)), ('60', ('60',)), ('100', ('100',)), ('120', ('120',)), ('144', ('144',)), ('180', ('180',)), ('240', ('240',)), ('0', ('Unlimited',))]
 # The sidebar's pages, top to bottom, and the methods that refresh a page's lists when it is shown.
-PAGES = ('home', 'graphics', 'performance', 'game', 'controls', 'mods', 'advanced')
-PAGE_REFRESH = {'home': ('refresh_status',), 'game': ('refresh_game_patches',), 'mods': ('refresh_lists',)}
+PAGES = ('home', 'graphics', 'performance', 'game', 'controls', 'mods', 'trophies', 'advanced')
+PAGE_REFRESH = {'home': ('refresh_status',), 'game': ('refresh_game_patches',), 'mods': ('refresh_lists',),
+                'trophies': ('refresh_trophies',)}
 UI_SCALES = [('auto', ('Auto',)), ('1', ('1x',)), ('2', ('2x',))]
 APP_DEFAULTS = {'ui_language': 'en', 'ui_scale': 'auto', 'game_dir': os.environ.get('SPARTAN_GAME_DIR', str(PORT_DIR.parent / 'CUSA01623') if WINDOWS else ''), 'update_dir': '', 'experimental_upscaler': False,
                 'video_backend': 'auto', 'gamemode': False, 'mangohud': False, 'desktop_integration': True, 'user_dir': '',
                 'mods_dir': '', 'mods_enabled': True, 'patches_dir': '', 'language': '1',
                 'hdr': False, 'draw_pipe': '', 'readbacks': '', 'no_msaa': '', 'stream_memory': 'cached',
-                'gpu_id': '', 'partial_height_views': True, 'background_warmup': True, 'parallel_warmup': True, 'pipeline_binary_cache': True,
+                'gpu_id': '', 'monitor': '', 'partial_height_views': True, 'background_warmup': True, 'parallel_warmup': True, 'pipeline_binary_cache': True,
                 'perf_diag': False, 'frame_capture_key': False, 'frame_stats': False, 'gpu_profile': False,
                 'vk_validation': False, 'close_on_play': False, 'discord_rpc': False,
                 'check_updates': False, 'game_patches': {}, 'controls': {}, 'pad_style': 'playstation',
@@ -669,7 +749,7 @@ UPSCALERS = [('fsr3', ('FSR 3.1 (every GPU)', 'FSR 3.1 (любая видеок�
              ('off', ('Off', 'Выключен'))]
 PRESETS = [('0', ('Native AA (×1.0)',)), ('1', ('Quality (×1.5)',)), ('2', ('Balanced (×1.7)',)),
            ('3', ('Performance (×2)',)), ('4', ('Ultra Performance (×3)',))]
-OUTPUTS = [('1280x720', ('1280 × 720 (Steam Deck)',)), ('1920x1080', ('1920 × 1080',)),
+OUTPUTS = [('1280x720', ('1280 × 720',)), ('1920x1080', ('1920 × 1080',)),
            ('2560x1440', ('2560 × 1440',)), ('3840x2160', ('3840 × 2160 (4K)',))]
 LIVE = [('auto', ('Auto (by graphics card)', 'Авто (по видеокарте)')), ('0', ('Off (faster)', 'Выключена (быстрее)')),
         ('1', ('On (change without restarting)', 'Включена (без перезапуска)'))]
@@ -1106,8 +1186,32 @@ def game_profile_of(folder):
     return title_id, game_profile_for(folder)
 
 
+def write_trophy_texts(folder):
+    """user/trophy_texts.txt: the trophy names, descriptions and labels the game shows, in the launcher's
+    language (the game reads it at start: the notice and the list of F8 / R3+R2). A failure is harmless."""
+    labels = (('heading', _('Trophies', 'Трофеи')), ('notice', _('TROPHY UNLOCKED', 'ТРОФЕЙ ПОЛУЧЕН')),
+              ('unlocked', _('UNLOCKED', 'ПОЛУЧЕН')), ('locked', _('LOCKED', 'ЗАКРЫТ')),
+              ('all', _('All trophies', 'Все')), ('only_unlocked', _('Unlocked', 'Получены')),
+              ('only_locked', _('Locked', 'Закрыты')),
+              ('counter', _('{} of {} unlocked', '{} из {} получено')),
+              ('hint', _('Up/Down: scroll   Left/Right: filter   F8 / R3+R2 / Esc: close',
+                         'Вверх/Вниз: прокрутка   Влево/Вправо: фильтр   F8 / R3+R2 / Esc: закрыть')))
+    lines = [f'# Written by the launcher on every start (language: {LANG}); do not edit.']
+    lines += [f'@{key}={" ".join(text.split())}' for key, text in labels]
+    for trophy in range(spartanport_trophies.TROPHY_COUNT):
+        name, description = spartanport_trophies.text(LANG, trophy)
+        lines.append(f'{trophy}={name} | {description}')
+    try:
+        folder = Path(folder)
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / 'trophy_texts.txt').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+    except OSError:
+        pass
+
+
 def game_environment(s):
     env = dict(os.environ)
+    write_trophy_texts(Path(s.get('user_dir') or DATA_DIR / 'user'))
     env['SPARTAN_GAME_DIR'] = s['game_dir']
     env.pop('SPARTAN_PATCH_DIR', None)
     # Temporal upscaling is parked (build_graphics): a switch saved on by 2.1.8 has no control left to
@@ -1137,6 +1241,8 @@ def game_environment(s):
     env['SPARTAN_PATCHES_DIR'] = s['patches_dir'] or str(DATA_DIR / 'patches')
     env['SPARTAN_PATCHES_CONFIG'] = str(DATA_DIR / 'patches.json')
     env['SPARTAN_LANGUAGE'] = s['language']
+    # Menu language is independent from the game's text and voice language.
+    env['SPARTAN_UI_LANGUAGE'] = s.get('ui_language') or windows_language()
     env['SPARTAN_DISCORD'] = '1' if s.get('discord_rpc') else '0'
     if s['hdr']:
         env['SPARTAN_HDR'] = '1'
@@ -1150,6 +1256,13 @@ def game_environment(s):
     env.pop('SPARTAN_GPU_ID', None)
     if gpu_id.isdigit():
         env['SPARTAN_GPU_ID'] = gpu_id
+    # The monitor index the probe enumerated for the dialog; an empty choice is the primary display,
+    # the game's own default when SPARTAN_MONITOR is absent. isdigit() finds letters, signs and blanks;
+    # isascii() also rejects the Unicode digits isdigit() accepts, which the game cannot read.
+    monitor = str(s.get('monitor', ''))
+    env.pop('SPARTAN_MONITOR', None)
+    if monitor.isascii() and monitor.isdigit():
+        env['SPARTAN_MONITOR'] = monitor
     env['SPARTAN_BACKGROUND_WARMUP'] = '1' if s.get('background_warmup', True) else '0'
     env['SPARTAN_PARALLEL_WARMUP'] = '1' if s.get('parallel_warmup', True) else '0'
     env['SPARTAN_PIPELINE_BINARIES'] = '1' if s.get('pipeline_binary_cache', True) else '0'
@@ -1234,6 +1347,11 @@ def window_icon(root, tk, own_ico, own_png):
         return photo
     except (tk.TclError, OSError):
         return None
+
+
+# ---- trophies -------------------------------------------------------------------------------
+TROPHY_TIERS = {'platinum': ('Platinum', 'Платина', '#8fd3e8'), 'gold': ('Gold', 'Золото', '#e0b43a'),
+                'silver': ('Silver', 'Серебро', '#c4c4c8'), 'bronze': ('Bronze', 'Бронза', '#cd7f32')}
 
 
 class Launcher:
@@ -1414,7 +1532,7 @@ class Launcher:
         s.configure('Link.TButton', background=PANEL, foreground=MUTED, borderwidth=0, padding=self.px((2, 1)),
                     font=self.font(UI_FONT, 9, 'underline'))
         s.map('Link.TButton', background=[('active', PANEL)], foreground=[('active', TEXT)])
-        s.configure('Play.TButton', background=ACCENT, foreground='#f4ece0', font=self.heading_font(15, bold=True),
+        s.configure('Play.TButton', background=ACCENT, foreground='#f4ece0', font=self.heading_font(11 if LANG == 'zh' else 15, bold=True),
                     padding=self.px((36, 10)), borderwidth=0)
         s.map('Play.TButton', background=[('active', ACCENT_HI), ('disabled', '#2e1c1c')],
               foreground=[('disabled', '#8a7a78')])
@@ -1469,12 +1587,15 @@ class Launcher:
             var.set(values()[0])
 
         def show(*_args):
+            if not box.winfo_exists():
+                return
             reload()  # the list may have changed since it was last opened
             current, known = var.get(), values()
             box.current(known.index(current) if current in known else 0)
         show()
         box.bind('<<ComboboxSelected>>', lambda _e: var.set(values()[box.current()]))
         var.trace_add('write', show)
+        box.refresh = show  # re-read the list and the selection after it changed in place
         return box
 
     def mod_resolutions(self):
@@ -1624,7 +1745,8 @@ class Launcher:
         self.side = side
         self.nav, self.current_page = {}, None
         titles = {'home': _('Home'), 'graphics': _('Graphics', 'Графика'), 'performance': _('Performance'),
-                  'game': _('Game', 'Игра'), 'controls': _('Controls', 'Управление'), 'mods': _('Mods', 'Моды'), 'advanced': _('Advanced', 'Дополнительно')}
+                  'game': _('Game', 'Игра'), 'controls': _('Controls', 'Управление'), 'mods': _('Mods', 'Моды'), 'trophies': _('Trophies', 'Трофеи'),
+                  'advanced': _('Advanced', 'Дополнительно')}
         for name in PAGES:
             item = tk.Label(side, text='    ' + titles[name], bg=BG, fg=TEXT, anchor='w',
                             font=self.heading_font(11, UI_FONT),
@@ -1657,12 +1779,14 @@ class Launcher:
         self.content.pack(fill='both', expand=True)
 
         self.pages = {}
+        self.monitor_pairs = None  # the Monitor rows (Quick settings and Graphics) list them again
         self.build_home()
         self.build_graphics()
         self.build_performance()
         self.build_game()
         self.build_controls()
         self.build_mods_page()
+        self.build_trophies()
         self.build_advanced()
         self.root.bind_all('<MouseWheel>', self.wheel)
         if not WINDOWS:  # X11 (Tk 8.6): the wheel arrives as buttons 4 and 5; on Windows those are side buttons
@@ -1714,6 +1838,15 @@ class Launcher:
             box = (self.choice(quick, key, 'ini', options, width=18) if key else
                    self.choice(quick, None, None, options, width=18, var=self.aspect_var()))
             box.grid(row=r, column=c + 1, sticky='w', padx=self.px((0, 40)))
+        # The Monitor row of the Graphics page, here too: the same list and the same 'monitor' setting
+        # (one variable), so choosing the screen in either section is the same choice. A row of its own,
+        # spanning the grid, keeps the longer labels (name, resolution, position) from widening the
+        # columns of the pairs above.
+        monitor = ttk.Frame(quick)
+        monitor.grid(row=2 + (len(items) + 1) // 2, column=0, columnspan=4, sticky='w', pady=self.px(6))
+        ttk.Label(monitor, text=_('Monitor', 'Монитор')).pack(side='left', padx=self.px((0, 12)))
+        self.quick_monitor_box = self.choice(monitor, 'monitor', 'app', self.monitor_list)
+        self.quick_monitor_box.pack(side='left')
 
     def draw_banner(self):
         """The cover art of the selected dump (sce_sys/pic1.png) under the title."""
@@ -1804,11 +1937,27 @@ class Launcher:
         #            _('Less ghosting on characters, cloth and weapons; costs about 10% FPS.',
         #              'Меньше гостинга на персонажах и одежде; стоит около 10% FPS.'))
 
+    def monitor_list(self):
+        """The monitors the Monitor rows offer (self.monitor_pairs): the Quick settings row and the
+        Graphics page read this one list, and its control holds the one 'monitor' setting, so the two
+        rows always show the same screen. It follows the window system the game will use (spartanport-probe
+        --displays): listed once per build, and again by refresh_monitors() when that changes."""
+        if getattr(self, 'monitor_pairs', None) is None:
+            self.monitor_pairs = monitor_options(
+                list_displays(self.app.get('video_backend', APP_DEFAULTS['video_backend'])))
+        return self.monitor_pairs
+
     def build_display(self, f):
         """Window and overlay: the top of the Graphics page."""
         self.section(f, _('Window', 'Окно'), top=4)
         self.row(f, _('Display mode'), self.choice(f, 'display_mode', 'ini', DISPLAY_MODES),
                  _('Borderless covers the screen without changing the display mode.'))
+        # Asked again whenever the box is drawn or opened (monitor_list), so a list refresh_monitors()
+        # put in place is picked up without capturing the list once.
+        self.monitor_box = self.choice(f, 'monitor', 'app', self.monitor_list, width=46)
+        self.row(f, _('Monitor', 'Монитор'), self.monitor_box,
+                 _('The screen the game opens its window on. Primary is the monitor the system considers the main one.',
+                   'Экран, на котором игра открывает своё окно. Основной монитор определяется системой.'))
         self.check(f, 'vsync', 'ini', _('VSync'), _('Off allows tearing for the lowest latency.'))
         self.check(f, 'hdr', 'app', _('Allow HDR output', 'Разрешить HDR'),
                    _('When HDR is on in Windows and the display supports it.',
@@ -1913,11 +2062,142 @@ class Launcher:
         self.section(f, _('Saves'))
         self.build_save_backups(f)
         self.section(f, _('Language'))
-        self.row(f, _('Game language', 'Язык игры'), self.choice(f, 'language', 'app', LANGUAGES))
+        # The game saves its own text and speech languages (Options) and restores them over the
+        # system language at every start after the first one (#842).
+        self.row(f, _('Game language', 'Язык игры'), self.choice(f, 'language', 'app', LANGUAGES),
+                 _("Used on the game's first start. After that, the game keeps its own text and speech "
+                   'languages in its settings save: change them in the game, in Options → Game Settings → '
+                   'Game Text and Options → Audio → Speech.',
+                   'Действует при первом запуске игры. Потом игра хранит язык текста и речи в своём '
+                   'сохранении настроек: меняйте их в игре, в Настройки → Параметры игры → Текст и '
+                   'Настройки → Аудио → Речь.'))
         self.build_patches(f)
 
     def user_dir(self):
         return Path(self.var('user_dir', 'app').get() or DATA_DIR / 'user')
+
+    # ---- trophies ----------------------------------------------------------------------------
+    def build_trophies(self):
+        tk, ttk = self.tk, self.ttk
+        f = self.scrolled_page('trophies', _('Trophies', 'Трофеи'),
+                               _('The trophies this port recorded while you played.',
+                                 'Трофеи, которые порт записал во время игры.'))
+        self.trophy_images = []
+        head = ttk.Frame(f)
+        head.grid(row=0, column=0, columnspan=2, sticky='we', pady=(4, 0))
+        self.trophy_summary = ttk.Label(head, text='', font=self.font(UI_FONT, 13, 'bold'))
+        self.trophy_summary.pack(side='left')
+        ttk.Button(head, text=_('Refresh', 'Обновить'), command=self.refresh_trophies).pack(side='right')
+        ttk.Button(head, text=_('Reset trophies', 'Сбросить трофеи'), command=self.reset_trophies).pack(
+            side='right', padx=(0, 8))
+        self.trophy_filter = ttk.Combobox(head, state='readonly', width=14,
+                                          values=[_('All trophies', 'Все'), _('Unlocked', 'Получены'), _('Locked', 'Закрыты')])
+        self.trophy_filter.current(0)
+        self.trophy_filter.bind('<<ComboboxSelected>>', lambda _e: self.refresh_trophies())
+        self.trophy_filter.pack(side='right', padx=(0, 8))
+        self.trophy_list = tk.Frame(f, bg=PANEL)
+        self.trophy_list.grid(row=1, column=0, columnspan=2, sticky='we', pady=(10, 0))
+        self.note(f, _('Only trophies unlocked with this port are listed; the ones earned on a PlayStation are not '
+                       'known to it.',
+                       'Показаны только трофеи, полученные через этот порт; полученные на PlayStation ему '
+                       'неизвестны.'))
+
+    def reset_trophies(self):
+        path = self.user_dir() / 'trophies.dat'
+        if self.process:
+            self.messagebox.showwarning(APP_NAME, _('Close the game before resetting the trophies.',
+                                                    'Закройте игру перед сбросом трофеев.'))
+            return
+        unlocked = len(spartanport_trophies.read_unlocked_trophies(path))
+        if not unlocked:
+            self.messagebox.showinfo(APP_NAME, _('No trophy is unlocked.', 'Нет полученных трофеев.'))
+            return
+        if not self.messagebox.askyesno(APP_NAME, _(
+                'Lock all {} unlocked trophies again? A copy is kept as trophies.dat.bak.',
+                'Снова закрыть все полученные трофеи ({})? Копия сохранится как trophies.dat.bak.').format(unlocked)):
+            return
+        try:
+            spartanport_trophies.reset_trophies(path)
+        except OSError as error:
+            self.messagebox.showerror(APP_NAME, _('Could not reset the trophies: {}',
+                                                  'Не удалось сбросить трофеи: {}').format(error))
+        self.refresh_trophies()
+
+    def trophy_package(self):
+        """The game's trophy00.trp: in the update folder when it has one, else in the game folder."""
+        for key in ('update_dir', 'game_dir'):
+            folder = self.var(key, 'app').get()
+            path = Path(folder) / 'sce_sys' / 'trophy' / 'trophy00.trp' if folder else None
+            if path and path.is_file():
+                return path
+        return None
+
+    def trophy_photo(self, png, locked):
+        """The icon as a 56 px (DPI-scaled) image; dimmed grey when the trophy is not unlocked."""
+        tk = self.tk
+        size = self.px(56)
+        photo = None
+        try:
+            from PIL import Image, ImageTk
+            image = Image.open(io.BytesIO(png)).convert('RGB').resize((size, size), Image.LANCZOS)
+            if locked:
+                image = image.convert('L').point(lambda v: int(v * 0.5)).convert('RGB')
+            photo = ImageTk.PhotoImage(image)
+        except (ImportError, OSError):
+            try:
+                photo = tk.PhotoImage(data=base64.b64encode(png))
+                factor = max(1, round(photo.width() / size))
+                photo = photo.subsample(factor) if factor > 1 else photo
+            except tk.TclError:
+                photo = tk.PhotoImage(width=size, height=size)
+        self.trophy_images.append(photo)  # Tk drops an image nobody references
+        return photo
+
+    def refresh_trophies(self):
+        tk = self.tk
+        for child in self.trophy_list.winfo_children():
+            child.destroy()
+        self.trophy_images = []
+        package = self.trophy_package()
+        icons = spartanport_trophies.read_trp_icons(package) if package else {}
+        if not icons:
+            self.trophy_summary.configure(text='')
+            tk.Label(self.trophy_list, text=_('No trophy list: choose the game folder on the Game page (its '
+                                              'sce_sys/trophy/trophy00.trp is read).',
+                                              'Нет списка трофеев: выберите папку игры на странице «Игра» '
+                                              '(читается sce_sys/trophy/trophy00.trp).'),
+                     bg=PANEL, fg=MUTED, font=self.font(UI_FONT, 10), justify='left', anchor='w',
+                     wraplength=self.px(680)).pack(anchor='w')
+            return
+        user = self.user_dir()
+        unlocked = spartanport_trophies.read_unlocked_trophies(user / 'trophies.dat')
+        ids = sorted(icons)
+        self.trophy_summary.configure(text=_('{} of {} unlocked', '{} из {} получено').format(
+            sum(1 for i in ids if i in unlocked), len(ids)))
+        show = self.trophy_filter.current()  # 0 all, 1 unlocked, 2 locked
+        for trophy in ids:
+            got = trophy in unlocked
+            if (show == 1 and not got) or (show == 2 and got):
+                continue
+            card = tk.Frame(self.trophy_list, bg=CARD, highlightthickness=1,
+                            highlightbackground=ACCENT if got else LINE)
+            card.pack(fill='x', pady=3)
+            tk.Label(card, image=self.trophy_photo(icons[trophy], not got), bg=CARD).pack(
+                side='left', padx=(10, 12), pady=8)
+            text = tk.Frame(card, bg=CARD)
+            text.pack(side='left', fill='x', expand=True)
+            name, description = spartanport_trophies.text(LANG, trophy)
+            tk.Label(text, text=name or _('Trophy {}', 'Трофей {}').format(trophy), bg=CARD,
+                     fg=TEXT if got else MUTED, font=self.font(UI_FONT, 11, 'bold'), anchor='w').pack(fill='x')
+            if description:
+                tk.Label(text, text=description, bg=CARD, fg=TEXT if got else MUTED,
+                         font=self.font(UI_FONT, 10), anchor='w', justify='left', wraplength=self.px(560)).pack(fill='x')
+            tier = spartanport_trophies.trophy_tier(icons[trophy])
+            label, colour = (_(*TROPHY_TIERS[tier][:2]), TROPHY_TIERS[tier][2]) if tier else ('', MUTED)
+            tk.Label(text, text=f'ID {trophy}' + (f'  ·  {label}' if label else ''), bg=CARD,
+                     fg=colour if got else MUTED, font=self.font(UI_FONT, 9), anchor='w').pack(fill='x')
+            tk.Label(card, text=_('UNLOCKED', 'ПОЛУЧЕН') if got else _('LOCKED', 'ЗАКРЫТ'), bg=CARD,
+                     fg=ACCENT_HI if got else MUTED, font=self.font(UI_FONT, 9, 'bold')).pack(side='right', padx=16)
 
     def build_save_backups(self, f):
         """run.py backs the saves up before every start; one of them can be restored here."""
@@ -2115,7 +2395,7 @@ class Launcher:
         page = f
         self.row(page, _('In-game button icons'), self.choice(page, 'glyph_style', 'app', GLYPH_STYLES),
                  hint=_('Replaces the PlayStation button icons inside the game with the ones of your controller. '
-                        'Works on a copy of two game files in the port\'s data folder (about 70 MB); your game folder '
+                        'Works on a copy of up to three game files in the port\'s data folder (about 410 MB); your game folder '
                         'is never changed. Applied when the game starts.'))
         saved_device = self.app.get('controls_device')
         self.device = tk.StringVar(value=saved_device if saved_device in dict(CONTROL_DEVICES) else 'keyboard')
@@ -2563,6 +2843,36 @@ class Launcher:
                  font=self.font(UI_FONT, 10)).pack(pady=self.px((4, 14)))
         ttk.Button(box, text=_('Open mods folder', 'Открыть папку модов'), command=lambda: self.open_path(str(root), 'mods_dir')).pack()
 
+    def refresh_monitors(self):
+        """The Monitor list again when the pending window system differs from the one it was listed
+        under: spartanport-probe enumerates under the backend the game will use, so the options follow it. The
+        index on screen is re-mapped first (a choice not saved yet must survive the switch), then the
+        one collected earlier; an index the new list holds for neither goes back to the primary
+        default, never to another screen that now sits at that position. Returns True only when it
+        relisted: never where no window system is selectable (Windows) nor when it did not change."""
+        box = getattr(self, 'monitor_box', None)
+        quick_box = getattr(self, 'quick_monitor_box', None)
+        if box is None or 'video_backend' not in self.vars:
+            return False
+        backend = self.vars['video_backend'].get()
+        if backend == self.app.get('video_backend', APP_DEFAULTS['video_backend']):
+            return False
+        displays = list_displays(backend)
+        self.monitor_pairs = monitor_options(displays)
+        # Save and PLAY store the choice the interface shows, so that is the index re-mapped first; the
+        # collected value only stands in when the box has no variable of its own (a stand-in launcher).
+        var = self.vars.get('monitor')
+        visible = var.get() if var is not None else None
+        values = [value for value, _text in self.monitor_pairs]
+        selected = visible if visible in values else monitor_selection(displays, self.app.get('monitor', ''))
+        self.app['monitor'] = selected
+        if var is not None:
+            var.set(selected)  # the box's write trace re-reads the list and its selection
+        box.refresh()
+        if quick_box is not None:
+            quick_box.refresh()
+        return True
+
     def refresh_conflicts(self):
         """The count of active mods, the conflict summary and marks, and the details panel."""
         from mods import conflicts
@@ -2746,7 +3056,10 @@ class Launcher:
         return {'app': app, 'ini': ini, 'mods': mods, 'patches': patches}
 
     def collect(self):
-        """Writes settings.json, spartanport.ini, mods.json and patches.json."""
+        """Writes settings.json, spartanport.ini, mods.json and patches.json. The monitor list is listed again
+        under the pending window system first, so the stored choice always belongs to the backend the
+        file carries: every caller that persists gets the same coherent pair, without asking for it."""
+        self.refresh_monitors()  # before the gather, so the monitor choice lands in settings.json too
         state = self.gather()
         _disk, lines = load_ini()
         persisted = {line.split('=', 1)[0].strip() for line in lines
@@ -2783,7 +3096,8 @@ class Launcher:
 
     def save(self):
         """The Save button: the files, without starting the game. A new launcher language rebuilds
-        the window in it."""
+        the window in it; collect() lists the monitors again for a new window system before it writes,
+        so the stored choice already follows the backend --play reads the same file for."""
         if not self.collect():
             return
         language = self.app.get('ui_language') or windows_language()
@@ -2792,7 +3106,7 @@ class Launcher:
         if self.dpi != previous_scale:
             self.size_window()
         if language != LANG or self.dpi != previous_scale:
-            self.rebuild(language)
+            self.root.after_idle(self.rebuild, language)
 
     def rebuild(self, language):
         """The window again in another language: every setting stays in its variable; the page,
@@ -2801,10 +3115,18 @@ class Launcher:
         LANG = language
         log, page, update = self.log.get('1.0', 'end-1c'), self.current_page, self.pending_update
         status = self.status['text'], self.status['fg']  # of the running game; otherwise build() redoes it
-        for var in self.vars.values():  # the old widgets' value labels and links
+        for var in list(self.vars.values()):  # the old widgets' value labels and links
             for modes, name in var.trace_info():
                 var.trace_remove(modes, name)
-        for child in self.root.winfo_children():
+        for kind in getattr(self, 'control_vars', {}).values():
+            for var in kind.values():
+                for modes, name in var.trace_info():
+                    var.trace_remove(modes, name)
+        if getattr(self, 'aspect', None) is not None:
+            for modes, name in self.aspect.trace_info():
+                self.aspect.trace_remove(modes, name)
+            self.aspect = None
+        for child in list(self.root.winfo_children()):
             child.destroy()
         self.style()
         self.build()
@@ -2822,7 +3144,8 @@ class Launcher:
 
     def refresh_save_button(self):
         """Save is only active while the window differs from the files (gather() against the last save)."""
-        self.save_button.configure(state='normal' if self.gather() != self.saved else 'disabled')
+        if getattr(self, 'save_button', None) and self.save_button.winfo_exists():
+            self.save_button.configure(state='normal' if self.gather() != self.saved else 'disabled')
 
     def watch_changes(self):
         self.refresh_save_button()
@@ -2986,6 +3309,8 @@ class Launcher:
         self.root.after(100, self.drain_output)
 
     def append(self, text):
+        if not getattr(self, 'log', None) or not self.log.winfo_exists():
+            return
         self.log.configure(state='normal')
         self.log.insert('end', text)
         lines = int(self.log.index('end-1c').split('.')[0])
@@ -3361,7 +3686,7 @@ def move_from_legacy_name():
             print(f'Rename: {line}', flush=True)
         if WINDOWS and FROZEN and UPDATE_DIR not in PORT_DIR.parents:
             legacy.remove_leftovers(PORT_DIR)
-            legacy.retarget_desktop_shortcut(PORT_DIR)
+            legacy.retarget_desktop_shortcut(PORT_DIR, data_dir=DATA_DIR)
     except OSError as error:
         print(f'Rename: {error}', flush=True)
 
