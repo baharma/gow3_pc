@@ -983,6 +983,8 @@ EXTRA = {
         "Strength of the gamepad's vibration; 0% turns it off.": 'Força da vibração do controle; 0% desliga.',
         'Windows could not reserve the memory the game needs. Close other programs, or let the Windows page file grow (for example 16384 MB initial, 32768 MB maximum), and start again.':
             'O Windows não conseguiu reservar a memória que o jogo precisa. Feche outros programas, ou deixe o arquivo de paginação do Windows crescer (por exemplo 16384 MB inicial, 32768 MB máximo), e inicie de novo.',
+        'Linux could not allocate the memory the game needs. Close other programs, check available RAM, swap space, or /dev/shm, and start again.':
+            'O Linux não conseguiu alocar a memória que o jogo precisa. Feche outros programas, verifique a memória RAM disponível, swap ou /dev/shm, e inicie de novo.',
         'The game stopped while reading its files: the game dump may be incomplete. Extract the pkg again and check that the game folder is about 40 GB.':
             'O jogo parou ao ler os próprios arquivos: o dump do jogo pode estar incompleto. Extraia o pkg de novo e confira se a pasta do jogo tem cerca de 40 GB.',
         'Native · 1920 × 1080 · 16:9': 'Nativa · 1920 × 1080 · 16:9',
@@ -1024,8 +1026,8 @@ EXTRA = {
             'Mira com o mouse enquanto L2 está pressionado (Cabeça de Hélio, Arco de Apolo). Relativo: o analógico segue o movimento e volta ao centro quando o mouse para. Absoluto: onde o mouse estava ao apertar L2 é o centro, e o analógico aponta dele até o mouse. Também no menu do jogo.',
         'Aiming with the mouse while L2 is held: lower needs more mouse movement for the same stick, higher less. Also in the in-game menu.':
             'Mira com o mouse enquanto L2 está pressionado: menor precisa de mais movimento do mouse para o mesmo analógico, maior de menos. Também no menu do jogo.',
-        "Click a box, then press a key, click a mouse button or turn the wheel (it gives up after {} seconds). An input already used by another button swaps with it; the arrow puts one button back on its default. Rage of Sparta presses L3 and R3 together: tick the box above it to use one input instead of two. Grab presses L1 and Circle together. Dodge evades the way you are moving (WASD), or back when standing still. Touchpad right opens the game's pause menu. Insert always opens the port's menu and cannot be bound. Applied when the game starts.":
-            'Clique em uma caixa e aperte uma tecla, clique com um botão do mouse ou gire a roda (desiste após {} segundos). Uma entrada já usada por outro botão troca com ele; a seta devolve um botão ao padrão. Rage of Sparta aperta L3 e R3 juntos: marque a caixa acima dele para usar uma entrada em vez de duas. Agarrar aperta L1 e Círculo juntos. A esquiva vai na direção em que você anda (WASD), ou para trás quando parado. O touchpad direito abre o menu de pausa do jogo. Insert sempre abre o menu do port e não pode ser atribuído. Aplicado ao iniciar o jogo.',
+        "Click a box, then press a key, click a mouse button or turn the wheel (it gives up after {} seconds). An input already used by another button swaps with it; the arrow puts one button back on its default. Rage of Sparta presses L3 and R3 together: tick the box above it to use one input instead of two. Grab presses L1 and Circle together. Dodge evades the way you are moving, or back when standing still. Touchpad right opens the game's pause menu. Insert always opens the port's menu and cannot be bound. Applied when the game starts.":
+            'Clique em uma caixa e aperte uma tecla, clique com um botão do mouse ou gire a roda (desiste após {} segundos). Uma entrada já usada por outro botão troca com ele; a seta devolve um botão ao padrão. Rage of Sparta aperta L3 e R3 juntos: marque a caixa acima dele para usar uma entrada em vez de duas. Agarrar aperta L1 e Círculo juntos. A esquiva vai na direção em que você anda, ou para trás quando parado. O touchpad direito abre o menu de pausa do jogo. Insert sempre abre o menu do port e não pode ser atribuído. Aplicado ao iniciar o jogo.',
         'Gamepad Mapping': 'Mapeamento do controle',
         'General': 'Geral',
         'How the stick-rotation prompts are answered. Keyboard: type the turn instead, half turns from the top D S A (clockwise) or A S D, from the bottom A W D or D W A, full turns D S A W or A S D W; a key out of turn starts again. Adaptive mouse: draw the turn with the mouse.':
@@ -1059,7 +1061,22 @@ EXTRA = {
         'Absolute': 'Absoluto',
         'Grab': 'Agarrar',
         'Dodge': 'Esquiva',
+        'Next weapon': 'Próxima arma',
+        'Previous weapon': 'Arma anterior',
         'Portuguese (Brazil)': 'Português (Brasil)',
+        'Reuse compiled shaders from disk': 'Reutilizar shaders compilados do disco',
+        'Shaders compiled in earlier sessions load from the shader cache instead of compiling again, so objects no longer appear a few frames late after starting or loading a save, and the cache is not rewritten every session (antivirus scans each written file). The first launch with it on rebuilds the cache once. Switch it off if an object, effect or color looks wrong only after a restart and is fine on the first run of a new cache.': 'Os shaders compilados em sessões anteriores carregam do cache de shaders em vez de compilar de novo: os objetos não aparecem mais alguns quadros atrasados depois de iniciar ou carregar um save, e o cache não é reescrito a cada sessão (o antivírus verifica cada arquivo gravado). A primeira inicialização com a opção ligada recria o cache uma vez. Desative se um objeto, efeito ou cor aparecer errado só depois de reiniciar e estiver certo na primeira execução de um cache novo.',
+        'Read the shader cache into memory at start': 'Ler o cache de shaders para a memória ao iniciar',
+        'A background thread reads the saved shaders into memory while the game starts; a note in the lower right corner shows the progress. Loading a shader then does not hold up a frame. Needs the option above. Switch it off on a slow hard drive or with little free RAM if the first minute stutters more or the game starts slower.': 'Uma thread em segundo plano lê os shaders salvos para a memória enquanto o jogo inicia; uma nota no canto inferior direito mostra o progresso. Assim, carregar um shader não segura um quadro. Precisa da opção acima. Desative em um HD lento ou com pouca RAM livre se o primeiro minuto travar mais ou o jogo demorar mais para abrir.',
+        'Show shader notes in the corner': 'Mostrar notas de shaders no canto',
+        'A note in the lower right corner shows the shader cache being read at start and the shaders being compiled, so a short stutter has a visible reason. Switch it off to keep the screen clean.': 'Uma nota no canto inferior direito mostra a leitura do cache de shaders ao iniciar e os shaders sendo compilados, para que uma travada curta tenha um motivo visível. Desative para manter a tela limpa.',
+        'Shader cache': 'Cache de shaders',
+        'Delete shader cache': 'Apagar cache de shaders',
+        'Deletes the saved shaders and pipelines of this saves folder. Use it if graphics look wrong after an update or the cache grew too big; the next start compiles everything again.': 'Apaga os shaders e pipelines salvos desta pasta de saves. Use se os gráficos ficarem errados depois de uma atualização ou se o cache ficar grande demais; a próxima inicialização compila tudo de novo.',
+        'Close the game before deleting the shader cache.': 'Feche o jogo antes de apagar o cache de shaders.',
+        'The shader cache is already empty.': 'O cache de shaders já está vazio.',
+        'Delete the shader cache ({} MB in {})? The game compiles the shaders again, so the next start stutters for a few minutes.': 'Apagar o cache de shaders ({} MB em {})? O jogo compila os shaders de novo, então a próxima inicialização trava por alguns minutos.',
+        'Could not delete all of the shader cache; another program may be using it: {}': 'Não foi possível apagar todo o cache de shaders; outro programa pode estar usando: {}',
     },
     'es': {
         'The launcher cannot write to {}, so it cannot replace itself there. Open the releases page to download the new version by hand?': 'El launcher no puede escribir en {}, así que no puede reemplazarse ahí. ¿Abrir la página de releases para descargar la versión nueva a mano?',
@@ -1272,6 +1289,8 @@ EXTRA = {
             'Sustituye los iconos de botones de PlayStation dentro del juego por los de tu mando. Trabaja sobre una copia de hasta tres archivos del juego en la carpeta de datos del port (unos 410 MB); tu carpeta del juego nunca se modifica. Se aplica al iniciar el juego.',
         'Windows could not reserve the memory the game needs. Close other programs, or let the Windows page file grow (for example 16384 MB initial, 32768 MB maximum), and start again.':
             'Windows no pudo reservar la memoria que necesita el juego. Cierra otros programas, o deja que el archivo de paginación de Windows crezca (por ejemplo 16384 MB inicial, 32768 MB máximo), y vuelve a iniciarlo.',
+        'Linux could not allocate the memory the game needs. Close other programs, check available RAM, swap space, or /dev/shm, and start again.':
+            'Linux no pudo asignar la memoria que necesita el juego. Cierra otros programas, comprueba la memoria RAM disponible, swap o /dev/shm, y vuelve a iniciarlo.',
         'The game stopped while reading its files: the game dump may be incomplete. Extract the pkg again and check that the game folder is about 40 GB.':
             'El juego se detuvo al leer sus archivos: el dump del juego puede estar incompleto. Extrae el pkg de nuevo y comprueba que la carpeta del juego ocupa unos 40 GB.',
         'Textures': 'Texturas',
@@ -1293,8 +1312,8 @@ EXTRA = {
             'Apuntar con el ratón mientras mantienes L2 (Cabeza de Helios, Arco de Apolo). Relativo: el stick sigue el movimiento y vuelve al centro cuando el ratón se detiene. Absoluto: donde estaba el ratón al pulsar L2 es el centro, y el stick apunta desde él hasta el ratón. También en el menú del juego.',
         'Aiming with the mouse while L2 is held: lower needs more mouse movement for the same stick, higher less. Also in the in-game menu.':
             'Apuntar con el ratón mientras mantienes L2: más bajo necesita más movimiento del ratón para el mismo stick, más alto menos. También en el menú del juego.',
-        "Click a box, then press a key, click a mouse button or turn the wheel (it gives up after {} seconds). An input already used by another button swaps with it; the arrow puts one button back on its default. Rage of Sparta presses L3 and R3 together: tick the box above it to use one input instead of two. Grab presses L1 and Circle together. Dodge evades the way you are moving (WASD), or back when standing still. Touchpad right opens the game's pause menu. Insert always opens the port's menu and cannot be bound. Applied when the game starts.":
-            'Haz clic en una casilla y luego pulsa una tecla, haz clic con un botón del ratón o gira la rueda (se cancela tras {} segundos). Una entrada ya usada por otro botón se intercambia con él; la flecha devuelve un botón a su valor predeterminado. Rage of Sparta pulsa L3 y R3 a la vez: marca la casilla de encima para usar una entrada en lugar de dos. Agarrar pulsa L1 y Círculo a la vez. Esquivar evade hacia donde te mueves (WASD), o hacia atrás si estás quieto. El touchpad derecho abre el menú de pausa del juego. Insert siempre abre el menú del port y no se puede asignar. Se aplica al iniciar el juego.',
+        "Click a box, then press a key, click a mouse button or turn the wheel (it gives up after {} seconds). An input already used by another button swaps with it; the arrow puts one button back on its default. Rage of Sparta presses L3 and R3 together: tick the box above it to use one input instead of two. Grab presses L1 and Circle together. Dodge evades the way you are moving, or back when standing still. Touchpad right opens the game's pause menu. Insert always opens the port's menu and cannot be bound. Applied when the game starts.":
+            'Haz clic en una casilla y luego pulsa una tecla, haz clic con un botón del ratón o gira la rueda (se cancela tras {} segundos). Una entrada ya usada por otro botón se intercambia con él; la flecha devuelve un botón a su valor predeterminado. Rage of Sparta pulsa L3 y R3 a la vez: marca la casilla de encima para usar una entrada en lugar de dos. Agarrar pulsa L1 y Círculo a la vez. Esquivar evade hacia donde te mueves, o hacia atrás si estás quieto. El touchpad derecho abre el menú de pausa del juego. Insert siempre abre el menú del port y no se puede asignar. Se aplica al iniciar el juego.',
         'Gamepad Mapping': 'Asignación del mando',
         'General': 'General',
         'How the stick-rotation prompts are answered. Keyboard: type the turn instead, half turns from the top D S A (clockwise) or A S D, from the bottom A W D or D W A, full turns D S A W or A S D W; a key out of turn starts again. Adaptive mouse: draw the turn with the mouse.':
@@ -1328,7 +1347,22 @@ EXTRA = {
         'Absolute': 'Absoluto',
         'Grab': 'Agarrar',
         'Dodge': 'Esquivar',
+        'Next weapon': 'Arma siguiente',
+        'Previous weapon': 'Arma anterior',
         'Portuguese (Brazil)': 'Portugués (Brasil)',
+        'Reuse compiled shaders from disk': 'Reutilizar shaders compilados del disco',
+        'Shaders compiled in earlier sessions load from the shader cache instead of compiling again, so objects no longer appear a few frames late after starting or loading a save, and the cache is not rewritten every session (antivirus scans each written file). The first launch with it on rebuilds the cache once. Switch it off if an object, effect or color looks wrong only after a restart and is fine on the first run of a new cache.': 'Los shaders compilados en sesiones anteriores se cargan de la caché de shaders en vez de compilarse de nuevo: los objetos ya no aparecen unos fotogramas tarde al iniciar o cargar una partida, y la caché no se reescribe en cada sesión (el antivirus revisa cada archivo escrito). El primer inicio con la opción activada reconstruye la caché una vez. Desactívalo si un objeto, efecto o color se ve mal solo después de reiniciar y está bien en la primera ejecución de una caché nueva.',
+        'Read the shader cache into memory at start': 'Leer la caché de shaders en memoria al iniciar',
+        'A background thread reads the saved shaders into memory while the game starts; a note in the lower right corner shows the progress. Loading a shader then does not hold up a frame. Needs the option above. Switch it off on a slow hard drive or with little free RAM if the first minute stutters more or the game starts slower.': 'Un hilo en segundo plano lee los shaders guardados en memoria mientras el juego inicia; una nota en la esquina inferior derecha muestra el progreso. Así, cargar un shader no retiene un fotograma. Necesita la opción de arriba. Desactívalo en un disco duro lento o con poca RAM libre si el primer minuto se traba más o el juego tarda más en abrir.',
+        'Show shader notes in the corner': 'Mostrar notas de shaders en la esquina',
+        'A note in the lower right corner shows the shader cache being read at start and the shaders being compiled, so a short stutter has a visible reason. Switch it off to keep the screen clean.': 'Una nota en la esquina inferior derecha muestra la lectura de la caché de shaders al iniciar y los shaders que se están compilando, para que un tirón corto tenga un motivo visible. Desactívalo para mantener la pantalla limpia.',
+        'Shader cache': 'Caché de shaders',
+        'Delete shader cache': 'Borrar caché de shaders',
+        'Deletes the saved shaders and pipelines of this saves folder. Use it if graphics look wrong after an update or the cache grew too big; the next start compiles everything again.': 'Borra los shaders y pipelines guardados de esta carpeta de partidas. Úsalo si los gráficos se ven mal después de una actualización o si la caché creció demasiado; el próximo inicio lo compila todo de nuevo.',
+        'Close the game before deleting the shader cache.': 'Cierra el juego antes de borrar la caché de shaders.',
+        'The shader cache is already empty.': 'La caché de shaders ya está vacía.',
+        'Delete the shader cache ({} MB in {})? The game compiles the shaders again, so the next start stutters for a few minutes.': '¿Borrar la caché de shaders ({} MB en {})? El juego compila los shaders de nuevo, así que el próximo inicio se traba unos minutos.',
+        'Could not delete all of the shader cache; another program may be using it: {}': 'No se pudo borrar toda la caché de shaders; puede que otro programa la esté usando: {}',
     },
 }
 
@@ -1568,7 +1602,7 @@ EXTRA.setdefault('zh', {}).update({'   (game patches)': '   （游戏补丁）',
  'Choose two separate folders for the game and its update, or leave the update folder empty.': '游戏和更新请选择两个不同目录，或将更新目录留空。',
  'Choose your game folder to play.': '请选择游戏目录以开始游玩。',
  'Circle': '圆圈',
- "Click a box, then press a key, click a mouse button or turn the wheel (it gives up after {} seconds). An input already used by another button swaps with it; the arrow puts one button back on its default. Rage of Sparta presses L3 and R3 together: tick the box above it to use one input instead of two. Grab presses L1 and Circle together. Dodge evades the way you are moving (WASD), or back when standing still. Touchpad right opens the game's pause menu. Insert always opens the port's menu and cannot be bound. Applied when the game starts.": '点击输入框后按键、点击鼠标按钮或滚动滚轮（{} '
+ "Click a box, then press a key, click a mouse button or turn the wheel (it gives up after {} seconds). An input already used by another button swaps with it; the arrow puts one button back on its default. Rage of Sparta presses L3 and R3 together: tick the box above it to use one input instead of two. Grab presses L1 and Circle together. Dodge evades the way you are moving, or back when standing still. Touchpad right opens the game's pause menu. Insert always opens the port's menu and cannot be bound. Applied when the game starts.": '点击输入框后按键、点击鼠标按钮或滚动滚轮（{} '
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    '秒后自动取消）。已被使用的输入会与原绑定互换；箭头可单独恢复默认绑定。斯巴达之怒同时按下 '
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'L3 '
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    '和 '
@@ -1926,6 +1960,7 @@ EXTRA.setdefault('zh', {}).update({'   (game patches)': '   （游戏补丁）',
                                                                                                                                                                                     'MB、最大 '
                                                                                                                                                                                     '32768 '
                                                                                                                                                                                     'MB）后重试。',
+ 'Linux could not allocate the memory the game needs. Close other programs, check available RAM, swap space, or /dev/shm, and start again.': 'Linux 无法为游戏分配所需的内存。请关闭其他程序，检查可用的 RAM、swap 交换空间或 /dev/shm，然后重新启动。',
  'Xbox button': 'Xbox 键',
  'Your game dump, saves and language.': '游戏文件、存档和语言。',
  'Your own dump of the game (eboot.bin, sce_module, sce_sys): God of War III Remastered, any region and version.': '你自己的游戏文件（eboot.bin、sce_module、sce_sys）；支持各地区和版本的战神 '
@@ -2010,6 +2045,10 @@ for _language, _text in {
 
 
 EXTRA.setdefault('id', {}).update({
+    'The launcher cannot write to {}, so it cannot replace itself there. Open the releases page to download the new version by hand?':
+        'Launcher tidak dapat menulis ke {}, sehingga tidak dapat mengganti dirinya sendiri di sana. Buka halaman rilis untuk mengunduh versi baru secara manual?',
+    'Version {} is out, but it has no Linux build yet.':
+        'Versi {} sudah rilis, tetapi belum ada build untuk Linux.',
     'Polish': 'Polandia',
     'Portuguese (Brazil)': 'Portugis (Brasil)',
     'Aspect ratio': 'Rasio aspek',
@@ -2283,6 +2322,8 @@ EXTRA.setdefault('id', {}).update({
         'Saat Anda bermain, mouse tetap berada di dalam jendela game, sehingga klik tidak akan mengenai monitor atau aplikasi lain. Menu dalam game dan berpindah jendela akan mengembalikannya. Juga ada di menu dalam game.',
     'Windows could not reserve the memory the game needs. Close other programs, or let the Windows page file grow (for example 16384 MB initial, 32768 MB maximum), and start again.':
         'Windows tidak dapat memesan memori yang dibutuhkan game. Tutup program lain, atau perbesar pagefile Windows (misalnya 16384 MB awal, 32768 MB maksimum), lalu mulai kembali.',
+    'Linux could not allocate the memory the game needs. Close other programs, check available RAM, swap space, or /dev/shm, and start again.':
+        'Linux tidak dapat mengalokasikan memori yang dibutuhkan game. Tutup program lain, periksa RAM yang tersedia, swap, atau /dev/shm, lalu mulai kembali.',
     '{} (a folder, not a file)': '{} (sebuah folder, bukan file)',
     '{} (empty)': '{} (kosong)',
     '{} (not a param.sfo)': '{} (bukan param.sfo)',
@@ -2314,7 +2355,7 @@ EXTRA.setdefault('id', {}).update({
     'Choose two separate folders for the game and its update, or leave the update folder empty.':
         'Pilih dua folder terpisah untuk game dan pembaruannya, atau biarkan folder pembaruan kosong.',
     'Choose your game folder to play.': 'Pilih folder game Anda untuk bermain.',
-    "Click a box, then press a key, click a mouse button or turn the wheel (it gives up after {} seconds). An input already used by another button swaps with it; the arrow puts one button back on its default. Rage of Sparta presses L3 and R3 together: tick the box above it to use one input instead of two. Grab presses L1 and Circle together. Dodge evades the way you are moving (WASD), or back when standing still. Touchpad right opens the game's pause menu. Insert always opens the port's menu and cannot be bound. Applied when the game starts.":
+    "Click a box, then press a key, click a mouse button or turn the wheel (it gives up after {} seconds). An input already used by another button swaps with it; the arrow puts one button back on its default. Rage of Sparta presses L3 and R3 together: tick the box above it to use one input instead of two. Grab presses L1 and Circle together. Dodge evades the way you are moving, or back when standing still. Touchpad right opens the game's pause menu. Insert always opens the port's menu and cannot be bound. Applied when the game starts.":
         "Klik kotak, lalu tekan tombol, klik tombol mouse, atau putar roda mouse (waktu habis setelah {} detik). Input yang sudah digunakan oleh tombol lain akan ditukar; panah mengembalikan tombol ke default-nya. Rage of Sparta menekan L3 dan R3 bersamaan: centang kotak di atasnya untuk memakai satu input saja. Grab menekan L1 dan Lingkaran bersamaan. Dodge menghindar ke arah gerakan Anda (WASD), atau mundur jika diam. Touchpad kanan membuka menu jeda game. Insert selalu membuka menu port dan tidak dapat diubah. Diterapkan saat game dimulai.",
     'Close the game before restoring saves.': 'Tutup game sebelum memulihkan simpanan.',
     'Controls': 'Kontrol',
@@ -2353,6 +2394,173 @@ EXTRA.setdefault('id', {}).update({
     'Keyboard': 'Keyboard',
     'Keyboard & Mouse Mapping': 'Pemetaan Keyboard & Mouse',
     'Keyboard (native)': 'Keyboard (asli)',
+})
+
+EXTRA['zh'].update({
+    'A background thread reads the saved shaders into memory while the game starts; a note in the lower right corner shows the progress. Loading a shader then does not hold up a frame. Needs the option above. Switch it off on a slow hard drive or with little free RAM if the first minute stutters more or the game starts slower.': '游戏启动时，后台线程会将已保存的着色器读入内存，右下角显示进度。随后加载着色器时无需因磁盘读取而阻塞帧。需要启用上一项。如果硬盘较慢或可用内存不足，导致启动变慢或第一分钟更卡顿，请关闭此项。',
+    'A note in the lower right corner shows the shader cache being read at start and the shaders being compiled, so a short stutter has a visible reason. Switch it off to keep the screen clean.': '右下角显示启动时的着色器缓存读取进度和着色器编译状态，便于了解短暂卡顿的原因。关闭此项可隐藏提示。',
+    'Close the game before deleting the shader cache.': '删除着色器缓存前请先关闭游戏。',
+    'Could not delete all of the shader cache; another program may be using it: {}': '无法删除全部着色器缓存，其他程序可能正在使用：{}',
+    'Delete shader cache': '删除着色器缓存',
+    'Delete the shader cache ({} MB in {})? The game compiles the shaders again, so the next start stutters for a few minutes.': '删除着色器缓存（{} MB，位于 {}）？游戏会重新编译着色器，下次启动后的几分钟可能出现卡顿。',
+    'Deletes the saved shaders and pipelines of this saves folder. Use it if graphics look wrong after an update or the cache grew too big; the next start compiles everything again.': '删除此存档文件夹中保存的着色器和管线。如果更新后画面异常或缓存过大，可以使用此功能。下次启动时会重新编译。',
+    'Read the shader cache into memory at start': '启动时将着色器缓存读入内存',
+    'Reuse compiled shaders from disk': '重用磁盘中已编译的着色器',
+    'Shader cache': '着色器缓存',
+    'Shaders compiled in earlier sessions load from the shader cache instead of compiling again, so objects no longer appear a few frames late after starting or loading a save, and the cache is not rewritten every session (antivirus scans each written file). The first launch with it on rebuilds the cache once. Switch it off if an object, effect or color looks wrong only after a restart and is fine on the first run of a new cache.': '从缓存加载先前会话编译的着色器，避免重新编译，减少启动游戏或加载存档后物体延迟出现，并避免每次重写缓存（杀毒软件会扫描每个写入的文件）。首次启用时会重建一次缓存。如果仅在重启后出现物体、特效或颜色异常，而新缓存首次运行正常，请关闭此项。',
+    'Show shader notes in the corner': '在角落显示着色器提示',
+    'The shader cache is already empty.': '着色器缓存已经为空。',
+})
+
+EXTRA['id'].update({
+    'A background thread reads the saved shaders into memory while the game starts; a note in the lower right corner shows the progress. Loading a shader then does not hold up a frame. Needs the option above. Switch it off on a slow hard drive or with little free RAM if the first minute stutters more or the game starts slower.': 'Thread latar belakang membaca shader tersimpan ke memori saat game dimulai; kemajuannya ditampilkan di sudut kanan bawah. Pemuatan shader berikutnya tidak perlu menunggu pembacaan disk. Memerlukan opsi di atas. Nonaktifkan jika hard disk lambat atau RAM terbatas membuat menit pertama lebih tersendat atau waktu mulai lebih lama.',
+    'A note in the lower right corner shows the shader cache being read at start and the shaders being compiled, so a short stutter has a visible reason. Switch it off to keep the screen clean.': 'Catatan di sudut kanan bawah menampilkan pembacaan cache saat mulai dan kompilasi shader, agar penyebab jeda singkat terlihat. Nonaktifkan untuk menyembunyikannya.',
+    'Close the game before deleting the shader cache.': 'Tutup game sebelum menghapus cache shader.',
+    'Could not delete all of the shader cache; another program may be using it: {}': 'Tidak dapat menghapus seluruh cache shader; program lain mungkin sedang menggunakannya: {}',
+    'Delete shader cache': 'Hapus cache shader',
+    'Delete the shader cache ({} MB in {})? The game compiles the shaders again, so the next start stutters for a few minutes.': 'Hapus cache shader ({} MB di {})? Game akan mengompilasi ulang shader, sehingga beberapa menit setelah mulai berikutnya dapat tersendat.',
+    'Deletes the saved shaders and pipelines of this saves folder. Use it if graphics look wrong after an update or the cache grew too big; the next start compiles everything again.': 'Menghapus shader dan pipeline tersimpan dari folder penyimpanan ini. Gunakan jika grafik bermasalah setelah pembaruan atau cache terlalu besar; saat mulai berikutnya semuanya dikompilasi ulang.',
+    'Read the shader cache into memory at start': 'Baca cache shader ke memori saat mulai',
+    'Reuse compiled shaders from disk': 'Gunakan kembali shader terkompilasi dari disk',
+    'Shader cache': 'Cache shader',
+    'Shaders compiled in earlier sessions load from the shader cache instead of compiling again, so objects no longer appear a few frames late after starting or loading a save, and the cache is not rewritten every session (antivirus scans each written file). The first launch with it on rebuilds the cache once. Switch it off if an object, effect or color looks wrong only after a restart and is fine on the first run of a new cache.': 'Shader dari sesi sebelumnya dimuat dari cache tanpa dikompilasi ulang, sehingga objek tidak terlambat muncul setelah game dimulai atau penyimpanan dimuat, dan cache tidak ditulis ulang setiap sesi (antivirus memindai setiap berkas yang ditulis). Saat pertama diaktifkan, cache dibangun ulang sekali. Nonaktifkan jika objek, efek, atau warna hanya bermasalah setelah mulai ulang tetapi normal saat cache baru pertama digunakan.',
+    'Show shader notes in the corner': 'Tampilkan catatan shader di sudut',
+    'The launcher cannot write to {}, so it cannot replace itself there. Open the releases page to download the new version by hand?': 'Launcher tidak dapat menulis ke {}, sehingga tidak dapat mengganti dirinya di sana. Buka halaman rilis untuk mengunduh versi baru secara manual?',
+    'The shader cache is already empty.': 'Cache shader sudah kosong.',
+    'Version {} is out, but it has no Linux build yet.': 'Versi {} telah tersedia, tetapi belum memiliki build Linux.',
+})
+
+# The weapon cycle rows of the keyboard table.
+EXTRA['zh'].update({'Next weapon': '下一把武器', 'Previous weapon': '上一把武器'})
+EXTRA['id'].update({'Next weapon': 'Senjata berikutnya', 'Previous weapon': 'Senjata sebelumnya'})
+
+EXTRA['pt'].update({
+    'Move forward': 'Mover para frente', 'Move backward': 'Mover para trás',
+    'Move left': 'Mover para a esquerda', 'Move right': 'Mover para a direita',
+    'Right stick up': 'Analógico direito para cima', 'Right stick down': 'Analógico direito para baixo',
+    'Right stick left': 'Analógico direito para a esquerda', 'Right stick right': 'Analógico direito para a direita',
+    'Clear input': 'Limpar entrada',
+    'Keyboard: enter the rotation with your movement inputs. With default keys, the sequences '
+    'are A W D / D W A, D S A / A S D and D S A W / A S D W. Remapping movement changes these '
+    'inputs too. Adaptive mouse: draw the turn with the mouse.':
+        'Teclado: faça a rotação com suas entradas de movimentação. Com as teclas padrão, as sequências '
+        'são A W D / D W A, D S A / A S D e D S A W / A S D W. Remapear a movimentação também altera '
+        'essas entradas. Mouse adaptativo: desenhe a rotação com o mouse.',
+})
+EXTRA['es'].update({
+    'Move forward': 'Mover hacia delante', 'Move backward': 'Mover hacia atrás',
+    'Move left': 'Mover a la izquierda', 'Move right': 'Mover a la derecha',
+    'Right stick up': 'Stick derecho hacia arriba', 'Right stick down': 'Stick derecho hacia abajo',
+    'Right stick left': 'Stick derecho a la izquierda', 'Right stick right': 'Stick derecho a la derecha',
+    'Clear input': 'Borrar entrada',
+    'Keyboard: enter the rotation with your movement inputs. With default keys, the sequences '
+    'are A W D / D W A, D S A / A S D and D S A W / A S D W. Remapping movement changes these '
+    'inputs too. Adaptive mouse: draw the turn with the mouse.':
+        'Teclado: introduce la rotación con tus entradas de movimiento. Con las teclas predeterminadas, '
+        'las secuencias son A W D / D W A, D S A / A S D y D S A W / A S D W. Reasignar el movimiento '
+        'también cambia estas entradas. Ratón adaptativo: dibuja la rotación con el ratón.',
+})
+
+EXTRA['zh'].update({
+    'Move forward': '向前移动', 'Move backward': '向后移动',
+    'Move left': '向左移动', 'Move right': '向右移动',
+    'Right stick up': '右摇杆向上', 'Right stick down': '右摇杆向下',
+    'Right stick left': '右摇杆向左', 'Right stick right': '右摇杆向右',
+    'Clear input': '清除绑定',
+    'Keyboard: enter the rotation with your movement inputs. With default keys, the sequences '
+    'are A W D / D W A, D S A / A S D and D S A W / A S D W. Remapping movement changes these '
+    'inputs too. Adaptive mouse: draw the turn with the mouse.':
+        '键盘：使用移动绑定输入旋转。默认按键序列为 A W D / D W A、D S A / A S D 和 D S A W / A S D W。'
+        '重新绑定移动按键后，这些输入也会随之改变。自适应鼠标：用鼠标画出旋转。',
+})
+EXTRA['id'].update({
+    'Move forward': 'Bergerak maju', 'Move backward': 'Bergerak mundur',
+    'Move left': 'Bergerak ke kiri', 'Move right': 'Bergerak ke kanan',
+    'Right stick up': 'Stik kanan ke atas', 'Right stick down': 'Stik kanan ke bawah',
+    'Right stick left': 'Stik kanan ke kiri', 'Right stick right': 'Stik kanan ke kanan',
+    'Clear input': 'Hapus input',
+    'Keyboard: enter the rotation with your movement inputs. With default keys, the sequences '
+    'are A W D / D W A, D S A / A S D and D S A W / A S D W. Remapping movement changes these '
+    'inputs too. Adaptive mouse: draw the turn with the mouse.':
+        'Keyboard: masukkan putaran dengan input gerakan Anda. Dengan tombol default, urutannya adalah '
+        'A W D / D W A, D S A / A S D dan D S A W / A S D W. Mengubah pemetaan gerakan juga mengubah '
+        'input ini. Mouse adaptif: gambar putaran dengan mouse.',
+})
+
+EXTRA.setdefault('pt', {}).update({
+    'Choose Configure next to a control. Each change is saved immediately.':
+        'Clique em Configurar ao lado de um comando. Cada alteração é salva na hora.',
+    'Game control': 'Comando no jogo', 'Assigned input': 'Entrada do controle',
+    'Configure': 'Configurar', 'Clear': 'Limpar', 'Close': 'Fechar',
+    'Cancel capture': 'Cancelar captura', 'Listening…': 'Aguardando…',
+    'Not configured': 'Não configurado', 'Button {}': 'Botão {}',
+    'D-pad {}: {}': 'Direcional {}: {}', 'Axis {} ({})': 'Eixo {} ({})',
+    'Left stick horizontal': 'Analógico esquerdo , horizontal',
+    'Left stick vertical': 'Analógico esquerdo , vertical',
+    'Right stick horizontal': 'Analógico direito , horizontal',
+    'Right stick vertical': 'Analógico direito , vertical',
+    'Configure any control, in any order.': 'Configure qualquer comando, na ordem que preferir.',
+    'Saved changes are kept when you close this window.':
+        'As alterações salvas são mantidas ao fechar esta janela.',
+    'Hold the input briefly. It will be saved for this control only.':
+        'Mantenha a entrada por um instante. Ela será salva apenas para este comando.',
+    'Saved: {}': 'Salvo: {}',
+    'Capture canceled. Previously saved changes are kept.':
+        'Captura cancelada. As alterações já salvas foram mantidas.',
+    'The change was not saved. Configure the control again to retry.':
+        'A alteração não foi salva. Configure o comando novamente para tentar de novo.',
+    'That input is assigned to another control. Clear its row first or choose another input.':
+        'Essa entrada já está em outro comando. Limpe a linha dele ou escolha outra entrada.',
+    'Set up a controller': 'Configurar um controle',
+    'Connect your controller, select it, then choose Start mapping.':
+        'Conecte seu controle, selecione-o e clique em Iniciar mapeamento.',
+    'Start mapping': 'Iniciar mapeamento',
+    'Save mapping': 'Salvar mapeamento',
+    'Back': 'Voltar', 'Skip': 'Pular', 'Cancel': 'Cancelar',
+    'No controller found. Connect it and choose Refresh.':
+        'Nenhum controle encontrado. Conecte-o e clique em Atualizar.',
+    '{} buttons, {} axes, {} D-pad hats': '{} botões, {} eixos, {} direcionais',
+    'Release all buttons and let the sticks rest.':
+        'Solte todos os botões e deixe os analógicos em repouso.',
+    'Release all buttons and the D-pad before starting.':
+        'Solte todos os botões e o direcional antes de começar.',
+    'Step {} of {}': 'Etapa {} de {}',
+    'Press {}': 'Pressione {}',
+    'Cross / A': 'X / A', 'Circle / B': 'Círculo / B',
+    'Square / X': 'Quadrado / X', 'Triangle / Y': 'Triângulo / Y',
+    'Release the previous input before continuing.': 'Solte o comando anterior para continuar.',
+    'Hold the requested input briefly. Skip controls your device does not have.':
+        'Mantenha o comando solicitado por um instante. Pule os comandos que seu controle não possui.',
+    'That input is already mapped. Use another input or skip this step.':
+        'Esse comando já foi mapeado. Use outro ou pule esta etapa.',
+    'Map Cross / A before saving.': 'Mapeie X / A antes de salvar.',
+    'Test your controller': 'Teste seu controle',
+    'Mapping complete': 'Mapeamento concluído',
+    'Press buttons and move the sticks to check them. Then choose Save mapping.':
+        'Aperte os botões e mova os analógicos para conferir. Depois clique em Salvar mapeamento.',
+    'Pressed: {}': 'Pressionado: {}',
+    'Left stick: {} / {}   Right stick: {} / {}\nL2: {}   R2: {}':
+        'Analógico esquerdo: {} / {}   Direito: {} / {}\nL2: {}   R2: {}',
+    'D-pad up': 'Direcional para cima', 'D-pad down': 'Direcional para baixo',
+    'D-pad left': 'Direcional para a esquerda', 'D-pad right': 'Direcional para a direita',
+    'Move the left stick to the right': 'Mova o analógico esquerdo para a direita',
+    'Move the left stick down': 'Mova o analógico esquerdo para baixo',
+    'Move the right stick to the right': 'Mova o analógico direito para a direita',
+    'Move the right stick down': 'Mova o analógico direito para baixo',
+    'Controller disconnected. Reconnect it and choose Refresh.':
+        'O controle foi desconectado. Reconecte-o e clique em Atualizar.',
+    'Could not save mapping': 'Não foi possível salvar o mapeamento',
+    'Controller ready': 'Controle pronto',
+    'Mapping saved for the next game start. Any game button remapping in Controls still applies.':
+        'Mapeamento salvo para a próxima inicialização. Os remapeamentos de botões na seção Controles continuam valendo.',
+    'Stop the game before setting up a controller.': 'Feche o jogo antes de configurar um controle.',
+    'SDL3 was not found. Use a complete port installation or build the project first.':
+        'A SDL3 não foi encontrada. Use uma instalação completa do port ou compile o projeto primeiro.',
+})
+
+EXTRA.setdefault('es', {}).update({
+    'Set up a controller': 'Configurar un mando',
+    'Stop the game before setting up a controller.': 'Cierra el juego antes de configurar un mando.',
 })
 
 _tables = {}

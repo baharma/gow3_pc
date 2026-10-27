@@ -180,6 +180,8 @@ def main():
     for key in env.pop('SPARTAN_DERIVED', '').split(','):
         env.pop(key, None)
     derived = []
+    import controller_mappings
+    controller_mappings.configure_environment(env, data)
     import graphics_options
     try:
         import discord_presence
@@ -196,7 +198,7 @@ def main():
     extra_resolutions = [s for s in patches.resolution_names(mod_patch_files) if s not in graphics_options.RESOLUTIONS]
     env['SPARTAN_EXTRA_RESOLUTIONS'] = ';'.join(extra_resolutions)
     derived.append('SPARTAN_EXTRA_RESOLUTIONS')
-    graphics, reverted = graphics_options.prepare(env['SPARTAN_CONFIG'], out / 'graphics_state.json', extra_resolutions)
+    graphics, reverted = graphics_options.prepare(env['SPARTAN_CONFIG'], out / 'graphics_state.json', extra_resolutions, env)
     if reverted:
         print('Graphics: the last restart never reached the game; previous options restored', flush=True)
     env.update(graphics_options.environment(graphics))
@@ -329,6 +331,7 @@ def main():
         # GPU caches (shaders, pipelines) beside the saves; read before main(), so set here.
         user_dir = Path(env.get('SPARTAN_USER_DIR', data / 'user')).resolve()
         user_dir.mkdir(parents=True, exist_ok=True)
+        env['SPARTAN_USER_DIR'] = str(user_dir)
         env.setdefault('SPARTAN_GPU_USER_DIR', str(user_dir))
         from save_backup import backup
         try:

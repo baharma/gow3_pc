@@ -118,12 +118,11 @@ then sheet only the part of every texture where the picture is, at a readable si
 texture that shows the same shapes there is a layer to change.
 
 `tools/wad_textures.py` finds a texture by looking: it tiles every texture of the WADs you name into
-contact sheets with numbers (`"SpartanPort.exe" --script tools\wad_textures.py "<game>\EXEC\WAD\PS4_LE" OLY1* -o sheets`),
+contact sheets with numbers (`python tools/wad_textures.py "<game>\EXEC\WAD\PS4_LE" OLY1* -o sheets`),
 sheets part of each texture (`--crop`), extracts the numbered ones as `.dds` (`--extract`), searches
 the entry names of every WAD for words to find the WAD of a room (`--grep Muse Lyre`), and ranks
-small textures that look like button prompts (`--find`). Run it with the full path to the script;
-the launcher's `--script` runs it with the Python it bundles, and `2>&1 | Out-Host` in PowerShell
-shows its output.
+small textures that look like button prompts (`--find`). It is a developer tool kept in the repository:
+run it with Python from a source checkout.
 
 The WADs in `PS4_LE` are little-endian. The PS3 release ran on a big-endian console, so its WADs
 are not expected to work here.
@@ -330,8 +329,8 @@ lists:
 From a terminal:
 
 ```sh
-SPARTAN_GAME_DIR=/path/CUSA01623 SPARTAN_MODS_DIR=/path/mods python run.py
-SPARTAN_GAME_DIR=/path/CUSA01623 SPARTAN_MODS_ENABLED=0 python run.py
+SPARTAN_GAME_DIR=/path/CUSA01623 SPARTAN_MODS_DIR=/path/mods bash run.sh
+SPARTAN_GAME_DIR=/path/CUSA01623 SPARTAN_MODS_ENABLED=0 bash run.sh
 ```
 
 ## Mods with game patches
@@ -369,3 +368,5 @@ them, the tool uses Pillow, NumPy and scikit-image, with the Cinzel font shipped
 shadPS4 and GoldHEN patch files go in the `patches/` folder in the data folder and are listed on the
 launcher's **Mods** page, under **Third-party patches**. They only apply to one build of `eboot.bin`: see the
 [patches guide](PATCHES.md#third-party-patches-shadps4-and-goldhen).
+
+Voice replacement through an Update folder: see [VOICE_REPLACEMENT.md](VOICE_REPLACEMENT.md).
