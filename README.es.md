@@ -191,6 +191,14 @@ La corrupción gráfica en Steam Deck/RADV es un problema conocido del AppImage 
     CPU, RAM y VRAM, cada uno opcional, con tamaño de fuente, esquina, opacidad del fondo y diseño.
     Los números son el uso del propio juego, no el de todo el sistema.
 
+  El menú sigue el idioma del launcher (inglés, portugués, español, francés, alemán, italiano,
+  polaco, turco, indonesio, ruso o chino), o el elegido arriba de la pestaña **Juego**, al
+  instante. La elección queda en `spartanport.ini` (`ui_language`).
+- **Trofeos** (F8, o R3+R2 en el control): todos los trofeos con su nombre oficial y lo que piden,
+  su grado, cuántos jugadores lo consiguieron y filtros por estado y por grado; notificaciones de
+  trofeo en cuatro temas, con tus propios sonidos e imágenes si quieres. Consulta
+  [docs/TROPHIES.es.md](docs/TROPHIES.es.md).
+
 ## Disponibilidad de funciones
 
 Disponibilidad comprobada en la [release 2.2.0](https://github.com/FelipePrado0/SpartanPort/releases/tag/windows-v2.2.0) y en el código el 14 de octubre de 2026.
@@ -272,6 +280,13 @@ L para la cruceta, Enter para Options, Tab y Retroceso para el touchpad.
 En un control sin touchpad (Xbox y otros), View abre el menú de pausa (el clic del touchpad derecho)
 y L1 + View abre el modo foto (el clic izquierdo). En un DualSense el touchpad funciona como en la
 PS4, y Share/Create funciona como View.
+
+**Ataques de cambio con L1 + cruceta y L1 + Cruz** (desactivado por defecto, página Controls): L1 +
+una dirección de la cruceta cambia a esa arma con su ataque de cambio, y el arma que Kratos ya tiene en
+la mano repite su ataque; L1 + Cruz hace el ataque de cambio del arma en la mano en lugar de pasar a la
+siguiente arma. El ataque de cambio de la misma arma otra vez espera 0,8 segundos después del último
+(el de otra arma no espera). La cruceta sola cambia como antes. Los tutoriales de cambio de arma lo dicen así en todos los idiomas
+(en copias de los archivos de idioma en la carpeta de datos del port). Sin el launcher, definí `SPARTAN_SWITCH_ATTACKS=1`.
 
 Los **íconos de botones en el juego** (desactivados por defecto) se eligen en la página Controls del launcher, en
 *In-game button icons*: *Match my controller*, *Xbox*, *Nintendo* o *Keyboard*. Reemplazan los íconos de
@@ -445,6 +460,9 @@ cargo run --release
 Abierto desde un checkout, encuentra solo las herramientas de `out/`; `SPARTAN_PORT_DIR` lo apunta
 a un port empaquetado (con `bin/`). PLAY inicia el propio exe del launcher con `--run`, así que
 nada necesita Python.
+
+En macOS, `main` compila solo el launcher (PLAY todavía no tiene juego para iniciar); mirá los pasos en
+[launcher-rust/README.md](launcher-rust/README.md#macos) (en inglés).
 
 ## Tests
 

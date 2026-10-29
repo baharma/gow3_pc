@@ -187,6 +187,14 @@ A corrupção gráfica no Steam Deck/RADV é um problema conhecido do AppImage 2
     CPU, RAM e VRAM, cada um opcional, com tamanho da fonte, canto, transparência e formato. Os
     números são o uso do próprio jogo, não do sistema inteiro.
 
+  O menu segue o idioma do launcher (inglês, português, espanhol, francês, alemão, italiano,
+  polonês, turco, indonésio, russo ou chinês), ou o escolhido no topo da aba **Jogo**, na hora.
+  A escolha fica em `spartanport.ini` (`ui_language`).
+- **Troféus** (F8, ou R3+R2 no controle): todos os troféus com o nome oficial e o que pedem, a
+  classe, quantos jogadores conseguiram, e filtros por estado e por classe; notificações de troféu
+  em quatro temas, com sons e imagens seus se você quiser. Veja
+  [docs/TROPHIES.pt-BR.md](docs/TROPHIES.pt-BR.md).
+
 ## Disponibilidade dos recursos
 
 Disponibilidade conferida na [release 2.2.0](https://github.com/FelipePrado0/SpartanPort/releases/tag/windows-v2.2.0) e no código em 14 de outubro de 2026.
@@ -269,6 +277,13 @@ Em um controle sem touchpad (Xbox e outros), View abre o menu de pausa (o clique
 touchpad) e L1 + View abre o modo foto (o clique esquerdo). No DualSense o touchpad funciona
 como no PS4, e Share/Create funciona como View.
 
+**Ataques de troca com L1 + direcional e L1 + Xis** (desligado por padrão, tela Controls): L1 + uma
+direção do direcional troca para essa arma com o ataque de troca dela, e a arma que já está na mão de
+Kratos repete o ataque; L1 + Xis faz o ataque de troca da arma na mão em vez de passar para a próxima
+arma. O ataque de troca da mesma arma de novo espera 0,8 segundo depois do último (o de outra arma
+não espera). O direcional sozinho troca como antes. Os tutoriais de troca de arma passam a dizer isso em todos os idiomas
+(em cópias dos arquivos de idioma na pasta de dados do port). Sem o launcher, defina `SPARTAN_SWITCH_ATTACKS=1`.
+
 Os **ícones de botões no jogo** (desligados por padrão) são escolhidos na tela Controls do launcher, em
 *Ícones dos botões no jogo*: *Igual ao meu controle*, *Xbox*, *Nintendo* ou *Teclado*. Eles trocam os ícones
 PlayStation dos tutoriais, da lista de golpes, dos eventos rápidos e, nos estilos de controle, da lira das Musas
@@ -323,7 +338,7 @@ uma correção para todas as configurações de overlay.
 - Tela preta ao abrir: use a release mais recente, que inclui o patch do deadlock na abertura.
   Se persistir, informe GPU, driver, build do jogo e a saída de **Advanced → Log**. Apagar o
   cache de shaders não é uma solução geral e exige reconstruí-lo na próxima abertura.
-- O jogo fecha com "cannot create ... guest memory (error 1450)": o Windows ficou sem memória virtual para alocar o pool de memória do jogo. Aumente o arquivo de paginação: pressione **Win + R**, digite `SystemPropertiesAdvanced`, vá em Configurações de **Desempenho** → guia **Avançado** → **Memória virtual** Alterar, desmarque o gerenciamento automático, selecione a unidade **C:**, defina um tamanho personalizado (ex.: 16384 MB inicial, 24576 MB máximo), clique em **Definir**, **OK** e reinicie o PC.
+- O jogo fecha com "cannot create ... guest memory (error 1450)", ou mais tarde com "cannot commit ... guest memory": o Windows ficou sem memória virtual para alocar o pool de memória do jogo. Aumente o arquivo de paginação: pressione **Win + R**, digite `SystemPropertiesAdvanced`, vá em Configurações de **Desempenho** → guia **Avançado** → **Memória virtual** Alterar, desmarque o gerenciamento automático, selecione a unidade **C:**, defina um tamanho personalizado (ex.: 16384 MB inicial, 24576 MB máximo), clique em **Definir**, **OK** e reinicie o PC.
 - O **Idioma do jogo** do launcher não muda nada: ele só vale no primeiro início do jogo. Depois, o
   jogo restaura os próprios idiomas de texto e de falas do save de configurações, então troque no
   jogo: **Opções → Configurações de jogo → Texto de jogo** e **Opções → Áudio → Falas** (por exemplo,
@@ -440,6 +455,9 @@ cargo run --release
 Aberto a partir de um checkout, ele acha sozinho as ferramentas de `out/`; `SPARTAN_PORT_DIR`
 aponta para um port empacotado (com `bin/`). O PLAY inicia o próprio exe do launcher com `--run`,
 então nada precisa de Python.
+
+No macOS, a `main` compila só o launcher (o PLAY ainda não tem jogo para iniciar); veja os passos em
+[launcher-rust/README.md](launcher-rust/README.md#macos) (em inglês).
 
 ## Testes
 
